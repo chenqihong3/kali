@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
+    private boolean untouched;
     private PowerManager.WakeLock wakeLock;
     private double test;
 

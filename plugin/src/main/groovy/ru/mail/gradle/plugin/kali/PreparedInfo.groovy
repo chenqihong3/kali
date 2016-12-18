@@ -16,6 +16,10 @@ final class PreparedInfo {
         getClass(className)?.getAccessor(methodName, methodDesc)
     }
 
+    boolean hasAccessor(String className, String fieldName, String fieldDesc) {
+        getClass(className)?.hasAccessor(fieldName, fieldDesc)
+    }
+
     static class Builder {
 
         final classes = [:]

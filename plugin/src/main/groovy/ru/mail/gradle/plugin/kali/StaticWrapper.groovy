@@ -10,6 +10,7 @@ class StaticWrapper extends BaseClassProcessor {
     Set<String> ignoreClasses
     List<Replacement> replacements
     List<Replacement> replacementsRegex
+    String name
     final PreparedInfo preparedInfo
 
     public StaticWrapper(Set<String> ignoreClasses,
@@ -26,11 +27,14 @@ class StaticWrapper extends BaseClassProcessor {
     void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         super.visit(version, access, name, signature, superName, interfaces)
         ignore = ignoreClasses.contains(name)
+        this.name = name
     }
 
     @Override
     FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-        access = (access & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) | Opcodes.ACC_PUBLIC
+        if (preparedInfo.hasAccessor(this.name, name, desc)) {
+            access = (access & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) | Opcodes.ACC_PUBLIC
+        }
         return super.visitField(access, name, desc, signature, value)
     }
 
