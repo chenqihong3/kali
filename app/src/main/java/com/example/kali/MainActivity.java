@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity {
 
     private PowerManager.WakeLock wakeLock;
+    private double test;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,5 +32,24 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private static class InnerClass {
+
+        void innerMethod() {
+            MainActivity activity = null;
+            activity.wakeLock = null;
+        }
+
+        void innerMethod2() {
+            MainActivity activity = null;
+            activity.test++;
+        }
+
+        void innerMethod3() {
+            MainActivity activity = null;
+            activity.test += 1000;
+        }
+
     }
 }

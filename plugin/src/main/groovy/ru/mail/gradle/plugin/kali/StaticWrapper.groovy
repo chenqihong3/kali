@@ -1,5 +1,6 @@
 package ru.mail.gradle.plugin.kali
 
+import org.objectweb.asm.FieldVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
@@ -9,12 +10,16 @@ class StaticWrapper extends BaseClassProcessor {
     Set<String> ignoreClasses
     List<Replacement> replacements
     List<Replacement> replacementsRegex
+    final PreparedInfo preparedInfo
 
-    public StaticWrapper(Set<String> ignoreClasses, List<Replacement> replacements,
-                         List<Replacement> replacementsRegex) {
+    public StaticWrapper(Set<String> ignoreClasses,
+                         List<Replacement> replacements,
+                         List<Replacement> replacementsRegex,
+                         PreparedInfo info) {
         this.ignoreClasses = ignoreClasses
         this.replacements = replacements
         this.replacementsRegex = replacementsRegex
+        this.preparedInfo = info
     }
 
     @Override
@@ -24,12 +29,19 @@ class StaticWrapper extends BaseClassProcessor {
     }
 
     @Override
+    FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+        access = (access & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) | Opcodes.ACC_PUBLIC
+        return super.visitField(access, name, desc, signature, value)
+    }
+
+    @Override
     MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         def defaultMethodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
         if (ignore) {
             return defaultMethodVisitor
         }
         return new MethodVisitor(Opcodes.ASM5, defaultMethodVisitor) {
+
             @Override
             void visitMethodInsn(int opcode,
                                  String insnOwner,
@@ -47,7 +59,7 @@ class StaticWrapper extends BaseClassProcessor {
                             insnDesc = "(L$replacement.from.owner;${replacement.from.descriptor[1..-1]}"
                         }
                         replaced = true
-                        return false
+                        return
                     }
                 }
                 if (!replaced) {
@@ -61,9 +73,14 @@ class StaticWrapper extends BaseClassProcessor {
                             }
                             insnOwner = replacement.to.owner
                             insnName = replacement.to.methodName
-                            return false
+                            return
                         }
                     }
+                }
+                def accessor = preparedInfo.getAccessor(insnOwner, insnName, insnDesc)
+                if (accessor) {
+                    accessor.accept(this)
+                    return
                 }
                 super.visitMethodInsn(opcode, insnOwner, insnName, insnDesc, itf)
             }
